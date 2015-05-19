@@ -18,8 +18,8 @@ Attributes
 - `god-unicorn['application_name']` - Application name for monitoring
 - `god-unicorn['start_command']` - Application name for monitoring
 - `god-unicorn['watch_interval']` - Poll intervals
-- `god-unicorn['uid']` - god-unicorn execute user
-- `god-unicorn['gid']` - god-unicorn execute group
+- `god-unicorn['user']` - god-unicorn execute user
+- `god-unicorn['group']` - god-unicorn execute group
 - `god-unicorn['restart_memory_usage']` - Unicorn memory usage threshold
 - `god-unicorn['restart_memory_times']` - The number of times the memory test needs to fail
 - `god-unicorn['restart_cpu_usage']` - Unicorn CPU usage threshold
@@ -34,7 +34,10 @@ Just include `god-unicorn` in your node's `run_list`:
 
 ```json
 {
-  "name":"my_node",
+  "god-unicorn": {
+      "user": "rails-user",
+      "group": "rails-group"
+  },
   "run_list": [
     "recipe[god-unicorn]"
   ]

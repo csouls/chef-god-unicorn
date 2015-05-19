@@ -16,8 +16,8 @@ end
 
 template "#{node['god-unicorn']['config_dir']}/unicorn.conf" do
   source 'unicorn.erb'
-  owner node['god-unicorn']['uid']
-  group node['god-unicorn']['gid']
+  owner node['god-unicorn']['user']
+  group node['god-unicorn']['group']
   mode '0644'
 end
 
