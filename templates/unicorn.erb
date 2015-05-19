@@ -1,0 +1,53 @@
+rails_env  = ENV['RAILS_ENV']  || "<%= node['rails']['env'] %>"
+rails_root = ENV['RAILS_ROOT'] || "<%= node['rails']['root'] %>"
+application_name = "<%= node['god-unicorn']['application_name'] %>"
+
+God.watch do |w|
+  w.name = application_name
+  w.interval = <%= node['god-unicorn']['watch_interval'] %>
+
+  w.uid = "<%= node['god-unicorn']['uid'] %>"
+  w.gid = "<%= node['god-unicorn']['gid'] %>"
+
+  w.start = "<%= node['god-unicorn']['unicorn_start'] %>"
+  w.stop = "kill -QUIT `cat #{rails_root}/tmp/pids/unicorn.pid`"
+  w.restart = "kill -USR2 `cat #{rails_root}/tmp/pids/unicorn.pid`"
+
+  w.start_grace = 10.seconds
+  w.restart_grace = 10.seconds
+  w.pid_file = "#{rails_root}/tmp/pids/unicorn.pid"
+  w.log = "#{rails_root}/log/god.log"
+
+  w.behavior(:clean_pid_file)
+
+  w.start_if do |start|
+    start.condition(:process_running) do |c|
+      c.interval = 5.seconds
+      c.running  = false
+    end
+  end
+
+  w.restart_if do |restart|
+    restart.condition(:memory_usage) do |c|
+      c.above = <%= node['god-unicorn']['restart_memory_usage'] %>
+      c.times = <%= node['god-unicorn']['restart_memory_times'] %>
+    end
+
+    restart.condition(:cpu_usage) do |c|
+      c.above = <%= node['god-unicorn']['restart_cpu_usage'] %>
+      c.times = <%= node['god-unicorn']['restart_cpu_times'] %>
+    end
+  end
+
+  w.lifecycle do |on|
+    on.condition(:flapping) do |c|
+      c.to_state     = [:start, :restart]
+      c.times        = 5
+      c.within       = 5.minutes
+      c.transition   = :unmonitored
+      c.retry_in     = 10.minutes
+      c.retry_times  = 5
+      c.retry_within = 2.hours
+    end
+  end
+end

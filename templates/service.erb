@@ -1,0 +1,71 @@
+#!/bin/bash
+#
+# god:           The Ruby Framework for Process Management
+#
+# chkconfig: 345 80 10
+# description: https://github.com/mojombo/god
+#
+# processname: god
+# pidfile: <%= node['god-unicorn']['pid_file'] %>
+# logfile: <%= node['god-unicorn']['log_file'] %>
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+SCRIPT_NAME=/etc/init.d/god
+
+DAEMON=<%= node['god-unicorn']['daemon'] %>
+PID_FILE=<%= node['god-unicorn']['pid_file'] %>
+LOG_FILE=<%= node['god-unicorn']['log_file'] %>
+CONFIG_DIR=<%= node['god-unicorn']['config_dir'] %>
+DEBUG_OPTIONS=<%= node['god-unicorn']['debug_options'] %>
+
+RETVAL=0
+
+god_start() {
+  start_cmd="$DAEMON -l $LOG_FILE -P $PID_FILE $DEBUG_OPTIONS"
+  echo $start_cmd
+  $start_cmd || echo -en "god already running"
+  RETVAL=$?
+  if [ "$RETVAL" == '0' ]; then
+    sleep 2
+    if [ -d $CONFIG_DIR ]; then
+      echo "god: loading master config"
+      $DAEMON load $CONFIG_DIR/unicorn.conf
+    fi
+  fi
+
+  return $RETVAL
+}
+
+god_stop() {
+  stop_cmd="$DAEMON terminate"
+  echo $stop_cmd
+  $stop_cmd || echo -en "god not running"
+}
+
+case "$1" in
+  start)
+    god_start
+    RETVAL=$?
+    ;;
+  stop)
+    god_stop
+    RETVAL=$?
+    ;;
+  restart)
+    god_stop
+    god_start
+    RETVAL=$?
+    ;;
+  status)
+    $DAEMON status
+    RETVAL=$?
+    ;;
+  *)
+    echo "Usage: god {start|stop|restart|status}"
+    exit 1
+    ;;
+esac
+
+exit $RETVAL
